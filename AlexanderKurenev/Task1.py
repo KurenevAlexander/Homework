@@ -1,27 +1,30 @@
-class OpenFile:
-    """Class-based context manager for opening and working with file"""
-    def __init__(self, file, mode='r'):
-        self.file = file
-        self.mode = mode
-        self.file_obj = None
+import threading
+from time import sleep
 
-    def __enter__(self):
-        try:
-            self.file_obj = open(self.file, self.mode)
-        except FileNotFoundError as no_file_err:
-            print(f'File not found - {no_file_err}')
-        except ValueError as mode_err:
-            print(f'Error mode - {mode_err}')
-        else:
-            return self.file_obj
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if self.file_obj:
-            self.file_obj.close()
-        if exc_type is not None:
-            print(f'Exception: {exc_type} - {exc_val} - {exc_tb}\n')
+def philosophers_dinner(right_fork, left_fork, philosopher):
+    while True:
+        # Take forks
+        first_fork = min(right_fork, left_fork)
+        second_fork = max(right_fork, left_fork)
+        forks_lock[first_fork].acquire()
+        forks_lock[second_fork].acquire()
+        print(f'Philosopher {philosopher} is eating! ')
+        sleep(1)
+        # Put forks
+        forks_lock[second_fork].release()
+        forks_lock[first_fork].release()
+        print(f'Philosopher {philosopher} is thinking! ')
+        sleep(1)
 
 
 if __name__ == '__main__':
-    with OpenFile('test_task1.txt', 'r') as res:
-        print(res.read())
+    forks = 5
+    philosophers = 5
+
+    forks_lock = [threading.Lock() for n in range(forks)]
+
+    for philosopher in range(philosophers):
+        right_fork = philosopher
+        left_fork = (philosopher + 1) % philosophers
+        threading.Thread(target=philosophers_dinner, args=(right_fork, left_fork, philosopher)).start()
